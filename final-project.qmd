@@ -3,3 +3,61 @@ title: "final-project"
 format: html
 editor: visual
 ---
+
+```{r}
+library(readr)
+data <- load("data/excessmort_clean.RData")
+fit <- weekly_counts %>%  filter(year(date) < 2017)  %>% 
+  lm(rate ~ sex+ agegroup+ day+ week, data=.)
+predictions <- predict(fit, newdata = weekly_counts, se.fit = TRUE)
+tmp <- weekly_counts %>%  mutate(predicted_outcome= predictions$fit*population, 
+                       se= predictions$se.fit*population, 
+                       sigma= sd(fit$residuals)*population, excess= outcome-predicted_outcome ) %>% 
+  group_by(date) %>% 
+  summarize(excess= sum(excess),
+            se= sqrt(sum(sigma^2+se^2)), .groups="drop") %>% 
+  filter(year(date)>= 2017) %>% 
+  ggplot(aes(date, excess))+
+  geom_point()+
+  geom_hline(yintercept = 0,lty=2, color="grey" )+
+  geom_errorbar(aes(ymin=excess-1.96*se, ymax=excess+1.96*se))
+tmp
+```
+```{r}
+weekly_counts %>% mutate(predicted_rate= predictions$fit) %>% 
+  filter(agegroup %in% c("0-4", "5-9", "10-14", "15-19", "20-24", 
+                         "25-29", "30-34", "35-39", "40-44", 
+                         "45-49", "50-54"))  %>% 
+  ggplot(aes(date, rate)) +
+  geom_point() + 
+  geom_line(aes(y = predicted_rate), colour="red") + 
+  facet_wrap(vars(agegroup, sex)) + 
+  labs(
+    title = "Observed vs. Predicted Rates Over Time by Age Group and Sex",
+    x = "Date",
+    y = "Rate") +
+  theme_minimal()
+```
+
+
+```{r}
+fit1 <- weekly_counts %>%
+  filter(between(year(date), 2008, 2016),  agegroup %in% c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29")) %>%
+  lm(rate ~ sex+ agegroup + day + week +agegroup*sex, data = .)
+weekly_counts1 <- weekly_counts %>%
+  filter(agegroup%in% c("0-4", "5-9", "10-14", "15-19", "20-24", 
+                         "25-29"))  %>% filter(between(year(date), 2008, 2016))
+predictions1 <- predict(fit1, newdata = weekly_counts1, se.fit = TRUE)
+weekly_counts1 %>% mutate(predicted_rate= predictions1$fit) %>% 
+  ggplot(aes(date, rate)) +
+  geom_point() + 
+  geom_line(aes(y = predicted_rate), colour="red") + 
+  facet_wrap(vars(agegroup, sex), scales = "free_y") + 
+  labs(
+    title = "Observed vs. Predicted Rates Over Time by Age Group and Sex",
+    x = "Date",
+    y = "Rate") +
+  theme_minimal()
+
+```
+
