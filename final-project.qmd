@@ -3,3 +3,21 @@ title: "final-project"
 format: html
 editor: visual
 ---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+## 2
+# Start with regression model from pset 8, split into age groups based comparable trends. Fit these models and use it to predict mortality.
+
+## 3
+# Yearly mortality plot shows excess deaths 2002 - 2008. Remove these years, refit models, and compare predictions. Also, explore weekly effect by splitting by week, refit these models, and compare predictions.
+
+## 4
+# Comment on final model, plot excess deaths (related to hurricane).
+
+## 5
+# Combine excessmort and NYT data, compute differences, plot stuff.
+```
