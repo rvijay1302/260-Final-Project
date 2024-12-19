@@ -32,3 +32,36 @@ wrangling_sep <- function(n, month) {
   new_table <- new_table %>% select(c("SEP", "Y2015", "Y2016", "Y2017", "Diff.")) %>% 
     filter(Y2015 != "" ,Y2015 != "Y2015")
   return (new_table) }
+# wrangling the rest
+wrangling_pdf <- function(n, month) {
+  page <- txt[n]
+  split_lines <- str_split(page, "\n+")[[1]]
+  header_line <- split_lines[3]
+  the_month <- header_line %>%
+    str_trim() %>%
+    str_replace_all(",\\s.", "") %>%
+    str_split("\\s{2,}", simplify = TRUE)
+  header <- the_month[1:2] %>%
+    str_trim() %>%
+    str_split("\\s+", simplify = TRUE)
+  
+  if (nrow(header) < 2 || ncol(header) < 4) {
+    stop("Header parsing failed: Ensure input format matches expectations.")
+  }
+  
+  the_names <- c(header[1, 1], header[1, 2], header[1, 3], header[1, 4], header[2, 1])
+  
+  new_table <- split_lines[4:43] %>%
+    str_trim() %>%
+    str_split("\\s{2,}", simplify = TRUE) %>%
+    data.frame(stringsAsFactors = FALSE) %>%
+    setNames(the_names)
+  
+  colnames(new_table) <- str_replace_all(colnames(new_table), "\\*", "")
+  selected_columns <- c(month, "Y2015", "Y2016", "Y2017", "Diff.")
+  new_table <- new_table %>%
+    select(all_of(selected_columns)) %>%
+    filter(Y2017 != "", Y2016 != "") 
+  
+  return(new_table)
+}
