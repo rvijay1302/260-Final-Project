@@ -65,3 +65,16 @@ wrangling_pdf <- function(n, month) {
   
   return(new_table)
 }
+#wrangling sep
+SEP <- wrangling_sep(1, "SEP")
+#wrangling other months 
+months <- c("OCT", "NOV", "DEC", "JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AGO")
+numbers <- 2:12
+sapply(1:length(months), function(i) {
+  result <- wrangling_pdf(numbers[i], months[i])
+  assign(months[i], result, envir = .GlobalEnv)
+})
+#additional wrangling for DEC 
+DEC <- DEC %>%  mutate (Diff.= Y2017, Y2017= NA) %>% filter (Y2015 != "2")
+#additional wrangling for OCT
+OCT <- OCT %>%  mutate(OCT= as.numeric(OCT)) %>%  filter (!is.na(OCT))
