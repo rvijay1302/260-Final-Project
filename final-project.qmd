@@ -64,7 +64,7 @@ all_data |> ggplot(aes(date, deaths)) + geom_point() +
   labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
 ```
 
-After plotting NYtimes scatter plot (see supplementary materials) we can see a drop at the end, which is because it takes time to officially register deaths, it takes 45 days to register the deaths, so the last 45 days were removed. 
+After plotting NYtimes scatter plot (see supplementary materials 5A) we can see a drop at the end, which is because it takes time to officially register deaths, it takes 45 days to register the deaths, so the last 45 days were removed. 
 
 Excessmort data was wrangled in two different ways for two different research questions of interest, it was wrangled to include dates between 2002 and 2017 and the dates were rounded to the day of the week when maria made landfall in Peurto Rico, grouped by agegroup and sex, the deaths was summed for all days of the week for each week providing weekly counts. excessmort data was also summarised to sum the deaths across all age groups and both sexes for each week, to be compared to the NY times dataset, filtered to only include dates included in the NYtimes pdf.
 

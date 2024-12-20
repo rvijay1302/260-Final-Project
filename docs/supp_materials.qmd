@@ -3,16 +3,19 @@ title: "Supplementary materials"
 format: html
 editor: visual
 ---
+
 ```{r}
 data <- load("data/excessmort_clean.RData")
 nytimes <- load ("data/nytimes_table.RData")
 ```
 
+### 5A
+
 ```{r}
 all_data |> ggplot(aes(date, deaths)) + geom_point() + 
   labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
 ```
-
+### 5B 
 ```{r}
 tmp <- daily_counts |> 
   filter(date > make_date(2015, 1, 1),date < make_date(2017, 10, 20), date <= max(date) - days(45) ) |> 
@@ -29,7 +32,7 @@ tmp %>%
     y = "Deaths"
   )
 ```
-
+### 5C
 ```{r}
 tmp2 <- all_data %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |> 
   filter(date <= max(date) - days(45)) %>% 
@@ -53,7 +56,6 @@ weekly_edited <- tmp %>% mutate(date = floor_date(date, unit = "week", week_star
 combined_data <- bind_rows(tmp2,weekly_edited )  
 ```
 
-
 ```{r}
 ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
   geom_line() + 
@@ -64,7 +66,7 @@ ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
        y = "Deaths") +
   theme_bw()
 ```
-
+### 5D
 ```{r}
 ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
   geom_bar(stat = "identity", position = "dodge") +  # 'dodge' for side-by-side bars
@@ -73,7 +75,7 @@ ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
        y = "Deaths") +
   theme_bw()
 ```
-
+### 5E
 ```{r}
 combined_data1 <- merge(tmp2, weekly_edited, by = "date", suffixes = c("_1", "_2"))
 ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
@@ -83,6 +85,7 @@ ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
        y = "Deaths (Dataset 2)") +
   theme_bw()
 ```
+### 5F
 ```{r}
 ggplot(combined_data, aes(x = deaths, fill = dataset)) +
   geom_density(alpha = 0.5) +  # alpha for transparency
@@ -91,4 +94,3 @@ ggplot(combined_data, aes(x = deaths, fill = dataset)) +
        y = "Density") +
   theme_bw()
 ```
-
