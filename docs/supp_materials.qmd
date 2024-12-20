@@ -1,7 +1,8 @@
 ---
-title: "supp_materials.qmd"
-format: html
-editor: visual
+title: "supp_materials"
+format: pdf
+execute: 
+  echo: false
 ---
 
 ```{r}
