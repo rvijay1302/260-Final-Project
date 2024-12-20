@@ -60,16 +60,6 @@ weekly_edited <- tmp %>% mutate(date = floor_date(date, unit = "week", week_star
 combined_data <- bind_rows(tmp2,weekly_edited )  
 ```
 
-```{r}
-ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
-  geom_line() + 
-  geom_point() + 
-  geom_vline(xintercept = as.Date("2017-09-20"), linetype = "dashed", color = "grey", linewidth = 0.8)+
-  labs(title = "Deaths Comparison Over Time",
-       x = "Date",
-       y = "Deaths") +
-  theme_bw()
-```
 ### 5D
 ```{r}
 ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
