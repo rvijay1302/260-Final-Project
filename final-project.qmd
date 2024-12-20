@@ -2,6 +2,8 @@
 title: "final-project"
 format: html
 editor: visual
+execute:
+  echo: False
 ---
 
 # Assessing Excess Mortality in Puerto Rico During Hurricane Maria
@@ -33,7 +35,14 @@ Next, we created two age structure diagrams, one for 2002 and one for 2016 (see 
 ### Results
 
 ```{r}
+library(dplyr)
+library(tidyverse)
+library(patchwork)
+library(ggplot2)
+```
 
+```{r}
+load("data/excessmort_clean.RData")
 ```
 
 Among both males and females, the youngest population groups have declined dramatically in size since the early 2000s whereas oldest population groups have grown markedly. This can be seen in both the line graph below, which plots population sizes over time stratified by sex and age group, and in Supplementary Figure 1A, which compares population size by sex and age group between 2002 and 2016. The overall population size in Puerto Rico has remained relatively stable from 2002 to 2016.
