@@ -6,6 +6,13 @@ format: html
 ```{r}
 library(dplyr)
 library(tidyverse)
+library(patchwork)
+library(ggplot2)
+
+```
+
+```{r}
+load("../data/excessmort_clean.RData")
 ```
 
 ### 1A
