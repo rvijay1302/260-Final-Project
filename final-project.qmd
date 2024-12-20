@@ -7,10 +7,12 @@ editor: visual
 ```{r}
 library(readr)
 library(tidyverse)
+library(knitr)
+install.packages("kableExtra")
+library(kableExtra)
 data <- load("data/excessmort_clean.RData")
 nytimes <- load ("data/nytimes_table.RData")
 ```
-
 
 ```{r}
 weekly_counts %>% group_by (date,agegroup) %>%
@@ -20,7 +22,6 @@ weekly_counts %>% group_by (date,agegroup) %>%
   geom_boxplot()+
   facet_wrap(~agegroup)
 ```
-
 
 ```{r}
 fit <- weekly_counts %>%  filter(year(date) < 2017)  %>% 
@@ -57,7 +58,6 @@ weekly_counts %>% mutate(predicted_rate= predictions$fit) %>%
   theme_minimal()
 ```
 
-
 ```{r}
 
 fit1 <- weekly_counts %>%
@@ -79,6 +79,7 @@ weekly_counts1 %>% mutate(predicted_rate= predictions1$fit) %>%
   theme_minimal()
 
 ```
+
 ```{r}
 all_data |> ggplot(aes(date, deaths)) + geom_point() + 
   labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
@@ -89,6 +90,7 @@ all_data |> filter(date <= max(date) - days(45)) |>
   labs(title = "Deaths extracted from PDF shared with NYT", 
        subtitle = "Data for days after the hurricane are shown in red", x = "Date", y = "Deaths")
 ```
+
 ```{r}
 library(excessmort)
 daily_counts <- puerto_rico_counts %>% filter(between(year(date), 2015, 2018))
@@ -130,6 +132,11 @@ weekly_edited <- tmp %>% mutate(date = floor_date(date, unit = "week", week_star
          week = as.factor(week)) %>%  mutate(dataset= "excessmort package")
 combined_data <- bind_rows(tmp2,weekly_edited )  # Combine both datasets
 
+
+```
+
+```{r}
+
 ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
   geom_line() + 
   geom_point() +  # Optional: Add points for clarity
@@ -137,26 +144,28 @@ ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
   labs(title = "Deaths Comparison Over Time",
        x = "Date",
        y = "Deaths") +
-  theme_minimal()
-
+  theme_bw()
 ```
+
 ```{r}
 ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
   geom_bar(stat = "identity", position = "dodge") +  # 'dodge' for side-by-side bars
   labs(title = "Total Deaths by Week",
        x = "Week",
        y = "Deaths") +
-  theme_minimal()
+  theme_bw()
 ```
+
 ```{r}
 ggplot(combined_data, aes(x = factor(week), y = deaths, fill = dataset)) +
   geom_boxplot() +
   labs(title = "Distribution of Deaths by Week",
        x = "Week",
        y = "Deaths") +
-  theme_minimal()
+  theme_bw()
 
 ```
+
 ```{r}
 combined_data1 <- merge(tmp2, weekly_edited, by = "date", suffixes = c("_1", "_2"))
 ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
@@ -164,15 +173,16 @@ ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
   labs(title = "Comparison of Deaths in Both Datasets",
        x = "Deaths (Dataset 1)",
        y = "Deaths (Dataset 2)") +
-  theme_minimal()
+  theme_bw()
 ```
+
 ```{r}
 ggplot(combined_data, aes(x = deaths, fill = dataset)) +
   geom_density(alpha = 0.5) +  # alpha for transparency
   labs(title = "Density Plot of Deaths",
        x = "Deaths",
        y = "Density") +
-  theme_minimal()
+  theme_bw()
 ```
 
 ```{r}
@@ -182,6 +192,48 @@ ggplot(combined_data, aes(x = yday(date), y = deaths, color = dataset)) +
   labs(title = "Comparison of Deaths by Week",
        x = "Day of Year",
        y = "Deaths") +
-  theme_minimal()
+  theme_bw()
 ```
 
+Methods
+
+the nytimes was wrangled using pdftools r package, a function was made that took the page number and month name in the pdf as inputs, the algorithm splits the pdf into lines that can be accessed one by one, header was set to the table and a data frame representing each month was the output for this function. further wrangling was done to turn 12 dataframes into one combined dataframe, pivot longer was used to turn the columns for each year into rows, followed by making a date for each row by using the month, day,year columns and removing them from a final dataframe that included the date and number of deaths for each row. deaths were then summed for each week for better visualization.
+
+```{r}
+all_data |> ggplot(aes(date, deaths)) + geom_point() + 
+  labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
+```
+
+After plotting NYtimes scatter plot we can see a drop at the end, which is because it takes time to officially register deaths, it takes 45 days to register the deaths, so the last 45 days were removed.
+
+excessmort data was wrangled in two different ways for two different research questions of interest, it was wrangled to include weekly counts where the beginning of the week is the day maria made landfall in Peurto Rico, grouped by agegroup and sex and the deaths was summed for all days of the week for each week. excessmort data was also summarised to sum the deaths across all age groups and both sexes for each week, to be compared to the NY times dataset, filtered to only include dates included in the NYtimes pdf.
+
+Results
+
+```{r}
+ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
+  geom_line() + 
+  geom_point() +  # Optional: Add points for clarity
+  geom_vline(xintercept = as.Date("2017-09-20"), linetype = "dashed", color = "grey", linewidth = 0.8)+
+  labs(title = "Deaths Comparison Over Time",
+       x = "Date",
+       y = "Deaths") +
+  theme_bw()
+```
+
+```{r}
+diff <- combined_data %>%
+  group_by(dataset) %>%
+  pivot_wider(names_from = dataset, values_from = deaths) %>%
+  mutate(difference = `excessmort package` - `NY times`) %>% 
+  filter (difference > 8) %>%  select(-c(week,day)) %>% 
+  rename (Date = date, `Excessmort package` =`excessmort package`, Difference=difference) %>% 
+  kable () %>% 
+  kable_styling() %>%
+  row_spec(0, align = "c")  
+
+  
+diff
+```
+
+The nytimes data seemed mostly similar to the excessmort data, differences were seen on certain dates, the largest difference was on the week of 2016-08-03 with excess deaths counted in the excessmort package, this trend continued for the following three weeks that year with a sum of 162. Another inconsistency was observed for 7 weeks starting in 2017-August-30, the sum of total deaths in the 7 weeks is 119 death included in excessmort package but not in the NY times pdf. The line plot shows the increase around SEP-2017 in favor of excessmort package, marked by the vertical grey line.
