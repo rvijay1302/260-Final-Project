@@ -21,3 +21,80 @@ library(tidyverse)
 ## 5
 # Combine excessmort and NYT data, compute differences, plot stuff.
 ```
+
+```{r}
+weekly_counts |>
+  group_by(date, agegroup) |>
+  summarize(rate = mean(rate, na.rm = TRUE),
+            .groups = "drop") |>
+  ggplot(aes(x = date, y = rate)) +
+  geom_line() +
+  facet_wrap(~ agegroup)
+```
+
+```{r}
+weekly_counts_combined <- weekly_counts |>
+  mutate(age_category = case_when(
+    agegroup %in% c("75-79", "80-84", "85-Inf") ~ "75-inf",
+    agegroup %in% c("55-59", "60-64", "65-69", "70-74") ~ "55-74",
+    agegroup %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50-54") ~ "25-54",
+    agegroup %in% c("5-9", "10-14", "15-19", "20-24") ~ "5-24",
+    agegroup == "0-4" ~ "0-4"
+  )) |>
+  group_by(date, sex, age_category, week, day) |>
+  summarize(
+    outcome = sum(outcome),
+    population = sum(population),
+    rate = sum(outcome) / sum(population),
+    .groups = "drop"
+  )
+
+fit <- lm(rate ~ sex + age_category + day + week + age_category:sex + age_category:week, data = weekly_counts_combined)
+
+summary(fit)
+
+predictions1 <- predict(fit, newdata = weekly_counts_combined, se.fit = TRUE)
+
+weekly_counts_combined <- weekly_counts_combined %>% 
+  mutate(
+    predicted_rate = predictions1$fit,
+    se = predictions1$se.fit,
+    lower = predicted_rate - 1.96 * se,
+    upper = predicted_rate + 1.96 * se
+  )
+
+ggplot(weekly_counts_combined, aes(x = date)) +
+  geom_line(aes(y = predicted_rate, color = age_category), size = 1) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = age_category), alpha = 0.2) +
+  facet_grid(age_category ~ sex, scales = "free_y") +
+  labs(
+    title = "Predicted Rates with 95% Confidence Intervals",
+    x = "Date",
+    y = "Predicted Rate"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom"
+  )
+```
+
+```{r}
+weekly_counts_combined %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = rate, color = sex), alpha = 0.5) +
+  geom_line(aes(y = predicted_rate, color = sex), linetype = "dashed") +
+  facet_wrap(~ age_category, scales = "free_y", ncol = 1) +
+  labs(
+    title = "Observed vs Predicted Mortality Rates by Age Category and Sex",
+    x = "Date",
+    y = "Rate",
+    color = "Sex"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(override.aes = list(linetype = c("solid", "dashed")))) +
+  annotate("text", x = min(weekly_counts_combined$date), y = Inf, 
+           hjust = 0, vjust = 1, label = "Solid: Observed\nDashed: Predicted", 
+           size = 3)
+```
