@@ -1,0 +1,50 @@
+---
+title: "supp_materials"
+format: html
+---
+
+```{r}
+library(dplyr)
+library(tidyverse)
+```
+
+### 1A
+
+```{r}
+avg_pop_2002 <- weekly_counts |>
+  filter(year(date) == 2002) |>
+  group_by(sex, agegroup) |>
+  summarize(population = mean(population)) |>
+  ungroup()
+  
+avg_pop_2016 <- weekly_counts |>
+  filter(year(date) == 2016) |>
+  group_by(sex, agegroup) |>
+  summarize(population = mean(population)) |>
+  ungroup()
+
+plot_2002 <- avg_pop_2002 |> 
+  ggplot(aes(x = ifelse(sex == "male", -population, population), 
+                     y = agegroup, 
+                     fill = sex)) + 
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  scale_x_continuous(labels = abs) +
+  xlab("Population") +
+  ylab("Age Group") +
+  labs(title = "Population 2002")
+  
+
+
+plot_2016 <- avg_pop_2016 |> 
+  ggplot(aes(x = ifelse(sex == "male", -population, population), 
+                     y = agegroup, 
+                     fill = sex)) + 
+  geom_bar(stat = "identity") +
+  scale_x_continuous(labels = abs) +
+  theme(axis.title.y = element_blank())+
+  labs(title = "Population 2016") +
+  xlab("Population") 
+  
+
+plot_2002 + plot_2016
+```
