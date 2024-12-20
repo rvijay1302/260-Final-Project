@@ -2,9 +2,11 @@
 title: "Supplementary materials"
 format: html
 editor: visual
+
 ---
 
 ```{r}
+library(tidyverse)
 data <- load("../data/excessmort_clean.RData")
 nytimes <- load ("../data/nytimes_table.RData")
 ```
@@ -17,6 +19,8 @@ all_data |> ggplot(aes(date, deaths)) + geom_point() +
 ```
 ### 5B 
 ```{r}
+library(excessmort)
+daily_counts <- puerto_rico_counts %>% filter(between(year(date), 2015, 2018))
 tmp <- daily_counts |> 
   filter(date > make_date(2015, 1, 1),date < make_date(2017, 10, 20), date <= max(date) - days(45) ) |> 
   group_by(date) %>%
@@ -59,7 +63,7 @@ combined_data <- bind_rows(tmp2,weekly_edited )
 ```{r}
 ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
   geom_line() + 
-  geom_point() +  # Optional: Add points for clarity
+  geom_point() + 
   geom_vline(xintercept = as.Date("2017-09-20"), linetype = "dashed", color = "grey", linewidth = 0.8)+
   labs(title = "Deaths Comparison Over Time",
        x = "Date",
@@ -94,3 +98,14 @@ ggplot(combined_data, aes(x = deaths, fill = dataset)) +
        y = "Density") +
   theme_bw()
 ```
+### 5G
+```{r}
+ggplot(combined_data, aes(x = as.factor(week), y = deaths, fill = dataset)) +
+  geom_boxplot() +  
+  labs(title = "Boxplot of Deaths by Week",
+       x = "Week",   
+       y = "Deaths") +  
+  theme_bw()  
+
+```
+
