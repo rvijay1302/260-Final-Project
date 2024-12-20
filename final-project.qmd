@@ -6,9 +6,11 @@ editor: visual
 
 ```{r}
 library(readr)
+library(tidyverse)
 data <- load("data/excessmort_clean.RData")
 fit <- weekly_counts %>%  filter(year(date) < 2017)  %>% 
-  lm(rate ~ sex+ agegroup+ day+ week, data=.)
+  lm(rate ~ sex+ agegroup+ day+ week+agegroup*sex, data=.)
+summary(fit)
 predictions <- predict(fit, newdata = weekly_counts, se.fit = TRUE)
 tmp <- weekly_counts %>%  mutate(predicted_outcome= predictions$fit*population, 
                        se= predictions$se.fit*population, 
@@ -41,6 +43,7 @@ weekly_counts %>% mutate(predicted_rate= predictions$fit) %>%
 
 
 ```{r}
+
 fit1 <- weekly_counts %>%
   filter(between(year(date), 2008, 2016),  agegroup %in% c("0-4", "5-9", "10-14", "15-19", "20-24", "25-29")) %>%
   lm(rate ~ sex+ agegroup + day + week +agegroup*sex, data = .)

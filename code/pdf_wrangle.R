@@ -103,6 +103,9 @@ SEP <- SEP %>% mutate(month = "September")
 all_data <- bind_rows(SEP, OCT, NOV, DEC, JAN, FEB, MAR, APR, 
                       MAY, JUN, JUL, AGO)
 all_data <- all_data  %>% group_by(month) %>%  mutate(day=row_number()) %>% ungroup() %>% 
-  select (Y2015, Y2016, Y2017, Diff., month, day)
-nytimes_table <- all_data
-save(nytimes_table, file = "data/nytimes_table.RData")
+  select (Y2015, Y2016, Y2017, month, day) %>% 
+  pivot_longer(-c(month, day), names_to = "year", values_to = "deaths") 
+all_data <- all_data %>% mutate(year = gsub("Y", "", year)) %>% 
+  mutate(date = as.Date(paste(year, month, day, sep = "-"), format = "%Y-%b-%d")) 
+all_data <- all_data %>% filter(!(is.na(deaths))) %>%  arrange(date) %>%  select(-c(month, year))
+save(all_data, file = "data/nytimes_table.RData")
