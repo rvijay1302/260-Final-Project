@@ -8,7 +8,6 @@ editor: visual
 library(readr)
 library(tidyverse)
 library(knitr)
-install.packages("kableExtra")
 library(kableExtra)
 data <- load("data/excessmort_clean.RData")
 nytimes <- load ("data/nytimes_table.RData")
@@ -54,23 +53,6 @@ combined_data <- bind_rows(tmp2,weekly_edited )
 
 
 ```
-
-```{r}
-
-ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
-  geom_line() + 
-  geom_point() +  # Optional: Add points for clarity
-  geom_vline(xintercept = as.Date("2017-09-20"), linetype = "dashed", color = "grey", linewidth = 0.8)+
-  labs(title = "Deaths Comparison Over Time",
-       x = "Date",
-       y = "Deaths") +
-  theme_bw()
-```
-
-
-
-
-
 
 
 Methods
