@@ -1,0 +1,94 @@
+---
+title: "Supplementary materials"
+format: html
+editor: visual
+---
+```{r}
+data <- load("data/excessmort_clean.RData")
+nytimes <- load ("data/nytimes_table.RData")
+```
+
+```{r}
+all_data |> ggplot(aes(date, deaths)) + geom_point() + 
+  labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
+```
+
+```{r}
+tmp <- daily_counts |> 
+  filter(date > make_date(2015, 1, 1),date < make_date(2017, 10, 20), date <= max(date) - days(45) ) |> 
+  group_by(date) %>%
+  summarise(deaths = sum(outcome, na.rm = TRUE)) 
+tmp %>%
+  ggplot(aes(yday(date), deaths, color = date < make_date(2017, 9, 20))) +  
+  geom_point(show.legend = FALSE) +
+  theme_bw() +
+  labs(
+    title = "Deaths extracted from excess mort package", 
+    subtitle = "Data for days after the hurricane are shown in red", 
+    x = "Day of the Year", 
+    y = "Deaths"
+  )
+```
+
+```{r}
+tmp2 <- all_data %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |> 
+  filter(date <= max(date) - days(45)) %>% 
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week)) %>%   mutate(dataset= "NY times") 
+weekly_edited <- tmp %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |>
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week)) %>%  mutate(dataset= "excessmort package")
+combined_data <- bind_rows(tmp2,weekly_edited )  
+```
+
+
+```{r}
+ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
+  geom_line() + 
+  geom_point() +  # Optional: Add points for clarity
+  geom_vline(xintercept = as.Date("2017-09-20"), linetype = "dashed", color = "grey", linewidth = 0.8)+
+  labs(title = "Deaths Comparison Over Time",
+       x = "Date",
+       y = "Deaths") +
+  theme_bw()
+```
+
+```{r}
+ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
+  geom_bar(stat = "identity", position = "dodge") +  # 'dodge' for side-by-side bars
+  labs(title = "Total Deaths by Week",
+       x = "Week",
+       y = "Deaths") +
+  theme_bw()
+```
+
+```{r}
+combined_data1 <- merge(tmp2, weekly_edited, by = "date", suffixes = c("_1", "_2"))
+ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
+  geom_point(aes(color = date)) +
+  labs(title = "Comparison of Deaths in Both Datasets",
+       x = "Deaths (Dataset 1)",
+       y = "Deaths (Dataset 2)") +
+  theme_bw()
+```
+```{r}
+ggplot(combined_data, aes(x = deaths, fill = dataset)) +
+  geom_density(alpha = 0.5) +  # alpha for transparency
+  labs(title = "Density Plot of Deaths",
+       x = "Deaths",
+       y = "Density") +
+  theme_bw()
+```
+
