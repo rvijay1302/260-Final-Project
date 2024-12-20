@@ -161,3 +161,56 @@ weekly_counts_combined_1 <- weekly_counts_combined_1 %>%
     upper = exp + 1.96 * se,
   )
 ```
+
+```{r}
+weekly_counts_with_2017 <- weekly_counts |>
+  mutate(age_category = case_when(
+    agegroup %in% c("75-79", "80-84", "85-Inf") ~ "75-inf",
+    agegroup %in% c("55-59", "60-64", "65-69", "70-74") ~ "55-74",
+    agegroup %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50-54") ~ "25-54",
+    agegroup %in% c("5-9", "10-14", "15-19", "20-24") ~ "5-24",
+    agegroup == "0-4" ~ "0-4"
+  )) |>
+  group_by(date, sex, age_category, week, day) |>
+  summarize(
+    outcome = sum(outcome),
+    population = sum(population),
+    rate = sum(outcome) / sum(population),
+    .groups = "drop"
+  )
+
+predictions2 <- predict(fit, newdata = weekly_counts_with_2017, se.fit = TRUE)
+
+weekly_counts_with_2017 <- weekly_counts_with_2017 %>% 
+  mutate(
+    exp = predictions2$fit*population,
+    se = predictions2$se.fit*population,
+    sigma = sd(fit$resid)*population,
+    excess = outcome - exp,
+    lower = exp - 1.96 * se,
+    upper = exp + 1.96 * se,
+  )
+
+weekly_counts_with_2017 |>
+  group_by(date) |>
+  filter(year(date) == 2017) |>
+  summarize(excess = sum(excess),
+            se = sqrt(sum(sigma^2 + se^2)), .groups = "drop") |>
+    ggplot(aes(date, excess)) +
+    geom_point() +
+    geom_hline(yintercept = 0, lty = 2, color = "grey") +
+    geom_errorbar(aes(ymin = excess - 1.96*se, ymax = excess + 1.96*se))
+```
+
+```{r}
+weekly_counts_with_2017 |>
+  filter(year(date) == 2017) |>
+  ggplot(aes(date, excess)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty = 2, color = "grey") +
+  geom_errorbar(aes(ymin = excess - 1.96*se, ymax = excess + 1.96*se)) +
+  facet_grid(sex ~ age_category, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Date", y = "Excess", title = "Excess by Sex and Age Category")
+```
