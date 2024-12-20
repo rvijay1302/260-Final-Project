@@ -107,5 +107,7 @@ all_data <- all_data  %>% group_by(month) %>%  mutate(day=row_number()) %>% ungr
   pivot_longer(-c(month, day), names_to = "year", values_to = "deaths") 
 all_data <- all_data %>% mutate(year = gsub("Y", "", year)) %>% 
   mutate(date = as.Date(paste(year, month, day, sep = "-"), format = "%Y-%b-%d")) 
-all_data <- all_data %>% filter(!(is.na(deaths))) %>%  arrange(date) %>%  select(-c(month, year))
+all_data <- all_data %>% filter(!(is.na(deaths))) %>%  arrange(date) %>%  
+  mutate(deaths= as.numeric(deaths)) %>%  select(date, deaths)
+
 save(all_data, file = "data/nytimes_table.RData")
