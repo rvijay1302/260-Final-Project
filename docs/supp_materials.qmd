@@ -5,8 +5,8 @@ editor: visual
 ---
 
 ```{r}
-data <- load("data/excessmort_clean.RData")
-nytimes <- load ("data/nytimes_table.RData")
+data <- load("../data/excessmort_clean.RData")
+nytimes <- load ("../data/nytimes_table.RData")
 ```
 
 ### 5A
