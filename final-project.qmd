@@ -79,4 +79,45 @@ weekly_counts1 %>% mutate(predicted_rate= predictions1$fit) %>%
   theme_minimal()
 
 ```
+```{r}
+all_data |> ggplot(aes(date, deaths)) + geom_point() + 
+  labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
+all_data |> filter(date <= max(date) - days(45)) |>
+  ggplot(aes(yday(date), deaths, color = date < make_date(2017, 9, 20))) + 
+  geom_point(show.legend = FALSE) +
+  theme_bw() +
+  labs(title = "Deaths extracted from PDF shared with NYT", 
+       subtitle = "Data for days after the hurricane are shown in red", x = "Date", y = "Deaths")
+```
+```{r}
+library(excessmort)
+daily_counts <- puerto_rico_counts %>% filter(between(year(date), 2015, 2018))
+tmp <- daily_counts |> 
+  filter(date > make_date(2015, 1, 1),date < make_date(2018, 1, 1), date <= max(date) - days(45) ) |> 
+  group_by(date) %>%
+  summarise(deaths = sum(outcome, na.rm = TRUE)) 
+tmp %>%
+  ggplot(aes(yday(date), deaths, color = date < make_date(2017, 9, 20))) +  
+  geom_point(show.legend = FALSE) +
+  theme_bw() +
+  labs(
+    title = "Deaths extracted from excess mort package", 
+    subtitle = "Data for days after the hurricane are shown in red", 
+    x = "Day of the Year", 
+    y = "Deaths"
+  )
+```
+
+```{r}
+tmp2 <- all_data %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |>
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week))
+
+```
 
