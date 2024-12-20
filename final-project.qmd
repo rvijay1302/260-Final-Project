@@ -56,3 +56,25 @@ These findings have important policy implications, namely that improved mortalit
 Our dataset and project have several limitations. In terms of the data, no information exists on the actual cause of most of the excessive deaths identified. This limits the scope of our analysis as the actual impact of the hurricane cannot be fully understood, and limits the degree to which policymakers can offer recommendations for future disaster responses. Furthermore, considering the power outages and general destruction of infrastructure, death counts may be somewhat inaccurate, particularly on dates during/close to the hurricane. We estimate that these death counts would in fact be slightly lower than average due to limitations recording deaths, and as such our conclusions on significantly high mortality rates remain very likely. Finally, because it was generated before data was readily available, the mortality data in the New York Times file ended after November 2017 and the excessmort package could not be compared to this data for December 2017 and later. 
 
 For all of the concerns it raises on the response of the Puerto Rico government, this work also sheds light on the essential work conducted by scientists and statisticians who were willing to engage with citizens witnessing significantly more deaths than what their government had reported. Although it came far too late to have significant impacts on disaster relief funding, the choice by the Puerto Rican government to acknowledge the deaths of 2,975 people came directly as a result of the hard work of residents, statisticians, data analysis and policymakers who were willing to think critically about the information that the government was reporting ([The Weather Channel, 2018](https://weather.com/news/news/2018-08-28-puerto-rico-hurricane-maria-death-toll-study#noloc_/weather/today/l/)). The flaws of mortality estimates during Hurricane Maria point to the necessity and power of thoughtful, unbiased data analysis and statistical science in disaster responses and beyond, particularly during events of high impact and high political importance.
+
+References
+
+Freitas, A. R. R., Donalisio, M. R., & Alarcón-Elbal, P. M. (2018, December). *Excess mortality and causes associated with chikungunya, Puerto Rico, 2014-2015*. Emerging infectious diseases. https://pmc.ncbi.nlm.nih.gov/articles/PMC6256393/#:\~:text=In%20Puerto%20Rico%2C%20the%20chikungunya,0.9%20deaths%2F100%2C000%20population).
+
+Guardian News and Media. (2017, October 4). *Hurricane death toll in Puerto Rico more than doubles to 34, governor says*. The Guardian. https://www.theguardian.com/world/2017/oct/03/puerto-rico-new-death-toll-hurricane-maria-trump-visit
+
+Gutierrez, G., & Seward, B. (2018, June 17). *Puerto Rico 9 months after Hurricane Maria: Questions persist over death toll, closed schools*. NBCNews.com. https://www.nbcnews.com/storyline/puerto-rico-crisis/puerto-rico-9-months-after-hurricane-maria-questions-persist-over-n883921
+
+Milken Institute School of Public Health. (2018, August 28). ASCERTAINMENT OF THE ESTIMATED EXCESS MORTALITY FROM HURRICANE MARÍA IN PUERTO RICO. https://publichealth.gwu.edu/sites/g/files/zaxdzs4586/files/2023-06/acertainment-of-the-estimated-excess-mortality-from-hurricane-maria-in-puerto-rico.pdf
+
+The New York Times. (2017, September 21). *Hurricane Maria updates: In Puerto Rico, the Storm “destroyed us.”* https://www.nytimes.com/2017/09/21/us/hurricane-maria-puerto-rico.html
+
+Oxfam. (2017, October 13). *Elderly struggle to survive in wake of Maria*. https://www.oxfamamerica.org/explore/stories/elderly-struggle-to-survive-in-wake-of-maria/
+
+Robles, F. (2018, August 9). *Puerto Rican government acknowledges hurricane death toll of 1,427*. The New York Times. https://www.nytimes.com/2018/08/09/us/puerto-rico-death-toll-maria.html
+
+Robles, F., Davis, K., Fink, S., & Almukhtar, S. (2017, December 8). *Official toll in Puerto Rico: 64. actual deaths may be 1,052.* The New York Times. https://www.nytimes.com/interactive/2017/12/08/us/puerto-rico-hurricane-maria-death-toll.html
+
+Sutter, J. D. (2018, June 12). *Puerto Rico seeks to Delay Records release \| CNN politics*. CNN. https://www.cnn.com/2018/06/12/politics/sutter-puerto-rico-records-delay-invs/index.html
+
+The Weather Channel. (2018, August 28). *Hurricane Maria death toll increased from 64 to 2,975 in Puerto Rico*. https://weather.com/news/news/2018-08-28-puerto-rico-hurricane-maria-death-toll-study
