@@ -62,6 +62,12 @@ wrangling_pdf <- function(n, month) {
   new_table <- new_table %>%
     select(all_of(selected_columns)) %>%
     filter(Y2017 != "", Y2016 != "") 
+  new_table <- new_table %>%
+  filter(!is.na(new_table[[month]])) %>%  # Remove rows with NA in the 'month' column
+  filter(!str_detect(new_table[[month]], "Total|Avg")) 
+  new_table <- new_table %>%
+    distinct(new_table[[month]], .keep_all = TRUE)  
+  new_table <- new_table %>%  select(-"new_table[[month]]") 
   
   return(new_table)
 }
@@ -75,6 +81,28 @@ sapply(1:length(months), function(i) {
   assign(months[i], result, envir = .GlobalEnv)
 })
 #additional wrangling for DEC 
-DEC <- DEC %>%  mutate (Diff.= Y2017, Y2017= NA) %>% filter (Y2015 != "2")
+DEC <- DEC %>%  mutate (Diff.= Y2017, Y2017= NA)
 #additional wrangling for OCT
 OCT <- OCT %>%  mutate(OCT= as.numeric(OCT)) %>%  filter (!is.na(OCT))
+library(purrr)
+library(dplyr)
+
+
+OCT <- OCT %>% mutate(month = "October")
+NOV <- NOV %>% mutate(month = "November")
+DEC <- DEC %>% mutate(month = "December")
+JAN <- JAN %>% mutate(month = "January")
+FEB <- FEB %>% mutate(month = "February")
+MAR <- MAR %>% mutate(month = "March")
+APR <- APR %>% mutate(month = "April")
+MAY <- MAY %>% mutate(month = "May")
+JUN <- JUN %>% mutate(month = "June")
+JUL <- JUL %>% mutate(month = "July")
+AGO <- AGO %>% mutate(month = "August")
+SEP <- SEP %>% mutate(month = "September")
+all_data <- bind_rows(SEP, OCT, NOV, DEC, JAN, FEB, MAR, APR, 
+                      MAY, JUN, JUL, AGO)
+all_data <- all_data  %>% group_by(month) %>%  mutate(day=row_number()) %>% ungroup() %>% 
+  select (Y2015, Y2016, Y2017, Diff., month, day)
+nytimes_table <- all_data
+save(nytimes_table, file = "data/nytimes_table.RData")
