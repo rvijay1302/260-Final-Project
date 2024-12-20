@@ -1,7 +1,6 @@
 ---
 title: "final-project"
-format: html
-editor: visual
+format: pdf
 execute: 
   echo: false
 ---

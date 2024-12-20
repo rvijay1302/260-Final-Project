@@ -1,7 +1,8 @@
 ---
 title: "Supplementary materials"
-format: html
-editor: visual
+format: pdf
+execute: 
+  echo: false
 
 ---
 
