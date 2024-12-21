@@ -5,12 +5,6 @@ execute:
   echo: false
 ---
 
-```{r}
-library(tidyverse)
-library(knitr)
-load("../data/excessmort_clean.RData")
-```
-
 ### 2A
 
 ```{r}
@@ -195,3 +189,102 @@ weekly_counts_with_2017 |>
     geom_hline(yintercept = 0, lty = 2, color = "grey") +
     geom_errorbar(aes(ymin = excess - 1.96*se, ymax = excess + 1.96*se))
 ```
+---
+
+```{r}
+library(knitr)
+load("../data/excessmort_clean.RData")
+library(tidyverse)
+data <- load("../data/excessmort_clean.RData")
+nytimes <- load ("../data/nytimes_table.RData")
+```
+
+### 5A
+
+```{r}
+all_data |> ggplot(aes(date, deaths)) + geom_point() + 
+  labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
+```
+### 5B 
+```{r}
+library(excessmort)
+daily_counts <- puerto_rico_counts %>% filter(between(year(date), 2015, 2018))
+tmp <- daily_counts |> 
+  filter(date > make_date(2015, 1, 1),date < make_date(2017, 10, 20), date <= max(date) - days(45) ) |> 
+  group_by(date) %>%
+  summarise(deaths = sum(outcome, na.rm = TRUE)) 
+tmp %>%
+  ggplot(aes(yday(date), deaths, color = date < make_date(2017, 9, 20))) +  
+  geom_point(show.legend = FALSE) +
+  theme_bw() +
+  labs(
+    title = "Deaths extracted from excess mort package", 
+    subtitle = "Data for days after the hurricane are shown in red", 
+    x = "Day of the Year", 
+    y = "Deaths"
+  )
+```
+### 5C
+```{r}
+tmp2 <- all_data %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |> 
+  filter(date <= max(date) - days(45)) %>% 
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week)) %>%   mutate(dataset= "NY times") 
+weekly_edited <- tmp %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |>
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week)) %>%  mutate(dataset= "excessmort package")
+combined_data <- bind_rows(tmp2,weekly_edited )  
+```
+
+### 5D
+```{r}
+ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
+  geom_bar(stat = "identity", position = "dodge") +  # 'dodge' for side-by-side bars
+  labs(title = "Total Deaths by Week",
+       x = "Week",
+       y = "Deaths") +
+  theme_bw()
+```
+### 5E
+```{r}
+combined_data1 <- merge(tmp2, weekly_edited, by = "date", suffixes = c("_1", "_2"))
+ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
+  geom_point(aes(color = date)) +
+  labs(title = "Comparison of Deaths in Both Datasets",
+       x = "Deaths (Dataset 1)",
+       y = "Deaths (Dataset 2)") +
+  theme_bw()
+```
+### 5F
+```{r}
+ggplot(combined_data, aes(x = deaths, fill = dataset)) +
+  geom_density(alpha = 0.5) +  # alpha for transparency
+  labs(title = "Density Plot of Deaths",
+       x = "Deaths",
+       y = "Density") +
+  theme_bw()
+```
+### 5G
+```{r}
+ggplot(combined_data, aes(x = as.factor(week), y = deaths, fill = dataset)) +
+  geom_boxplot() +  
+  labs(title = "Boxplot of Deaths by Week",
+       x = "Week",   
+       y = "Deaths") +  
+  theme_bw()  
+
+```
+
+
