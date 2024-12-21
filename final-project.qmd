@@ -7,11 +7,61 @@ execute:
 
 # Assessing Excess Mortality in Puerto Rico During Hurricane Maria
 
-### Abstract
+```{r}
+library(tidyverse)
+library(knitr)
+load("data/excessmort_clean.RData")
+library(readr)
+library(kableExtra)
+nytimes <- load ("data/nytimes_table.RData")
+library(excessmort)
+daily_counts <- puerto_rico_counts %>% filter(between(year(date), 2015, 2018))
+tmp <- daily_counts |> 
+  filter(date > make_date(2015, 1, 1),date < make_date(2017, 10, 20), date <= max(date) - days(45) ) |> 
+  group_by(date) %>%
+  summarise(deaths = sum(outcome, na.rm = TRUE)) 
+tmp %>%
+  ggplot(aes(yday(date), deaths, color = date < make_date(2017, 9, 20))) +  
+  geom_point(show.legend = FALSE) +
+  theme_bw() +
+  labs(
+    title = "Deaths extracted from excess mort package", 
+    subtitle = "Data for days after the hurricane are shown in red", 
+    x = "Day of the Year", 
+    y = "Deaths"
+  )
+```
+
+```{r}
+tmp2 <- all_data %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |> 
+  filter(date <= max(date) - days(45)) %>% 
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week)) %>%   mutate(dataset= "NY times") 
+weekly_edited <- tmp %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |>
+  group_by(date) |>
+  summarize(deaths = sum(deaths), 
+            n = n(), .groups = "drop") |>
+  filter(n == 7) |>
+  select(-n) |>
+  mutate(week = epiweek(date)) |>
+  mutate(day = difftime(date, min(date), units = "day"),
+         week = as.factor(week)) %>%  mutate(dataset= "excessmort package")
+combined_data <- bind_rows(tmp2,weekly_edited )  
+
+
+```
+
+## Abstract
 
 Hurricane Maria resulted in widespread destruction of land, infrastructure, and resources across Puerto Rico when it made landfall in September 2017. Estimates of the death toll currently range from 1,400 to nearly 5,000 deaths, but the official death toll reported by the Puerto Rican government remained stubbornly low for many months after the hurricane. This project attempts to statistically analyze Puerto Rico's Department of Health Demographic Registry mortality data from 2002 to 2017 to identify the excess mortality during Hurricane Maria. We begin by examining population and mortality trends across age and sex groups, statistically model excess mortality in 2017 during Hurricane Maria as compared to typical mortality rates, and compare our dataset with existing data on hurricane mortality. We identify more than 2,000 more deaths than what would have been expected using prior data. We conclude by reflecting on the results of our findings, the limitations of this dataset, and the importance of thoughtful data analysis for public health decisions.
 
-### Introduction
+## Introduction
 
 On September 20, 2017, the devastating tropical cyclone Hurricane Maria made landfall on Puerto Rico's southeast coast. Storm surges, flooding, and high winds resulted in landslides, tremendous infrastructural damages, loss of nearly 80% of the country’s agricultural land, and resulted in damage estimated at more than \$90 billion USD. All 3.4 million residents were left without electricity when the island’s power grid was destroyed, resulting in a blackout that was not fully resolved for months after the storm ([The New York Times, 2017](https://www.nytimes.com/2017/09/21/us/hurricane-maria-puerto-rico.html)). Two weeks after the storm fewer than 10% of residents had regained electrical power, while fewer than half had access to drinking water ([Associated Press, 2017](https://www.theguardian.com/world/2017/oct/03/puerto-rico-new-death-toll-hurricane-maria-trump-visit)). Morgues reported “overflowing” bodies, unsurprising given the devastation of the storm ([Gutierrez & Seward, 2018](https://www.nbcnews.com/storyline/puerto-rico-crisis/puerto-rico-9-months-after-hurricane-maria-questions-persist-over-n883921)). However, the government of Puerto Rico maintained that the death count was merely 64 deaths more than two months after the storm’s initial landfall ([Robles et. al, 2017](https://www.nytimes.com/interactive/2017/12/08/us/puerto-rico-hurricane-maria-death-toll.html)). Media and investigative journalists argued that counts were likely significantly higher, and began mounting lawsuits against the Puerto Rican government with requests for more information on deaths ([Sutter, 2018](https://www.cnn.com/2018/06/12/politics/sutter-puerto-rico-records-delay-invs/index.html)). Work by data scientists and investigative journalists at the New York Times, George Washington University, the University of Puerto Rico Graduate School of Public Health, and other organizations suggested that mortality during late 2017 exceeded historical estimates by more than 1,000 deaths ([Robles et. al, 2017](https://www.nytimes.com/interactive/2017/12/08/us/puerto-rico-hurricane-maria-death-toll.html); [Milken Institute, 2018](https://publichealth.gwu.edu/sites/g/files/zaxdzs4586/files/2023-06/acertainment-of-the-estimated-excess-mortality-from-hurricane-maria-in-puerto-rico.pdf)). Ultimately, on August 9, 2018, nearly a year after the storm made its initial descent, the government of Puerto Rico acknowledged that more than 2,000 people died as a result of Hurricane Maria. 
 
@@ -19,30 +69,30 @@ One of the most essential statistical tools used by researchers to determine exc
 
 This project applies linear regression methods to mortality data from Puerto Rico's Department of Health Demographic Registry between 2002 and 2017 in order to quantify the excess mortality rate following Hurricane Maria and to understand the true humanitarian impact of the storm. We begin by exploring population demographics and trends in sex and age groups in order to thoughtfully inform our modeling and predictions. We next fit a multiple linear model regressing age category, sex, week value and date on observed death rate, with added effect modification between age category and sex and age category and week value. We utilize this model to generate predicted death rates and compare with observed death rates. We discuss our findings in the context of the severe underreporting of true deaths by the Puerto Rico government, and argue that this analysis procedure may serve as a model for future analysis of mortality during severe weather events. 
 
-### Methods
-
+## Methods
 The dataset used for this project comes from the excessmort package Puerto Rico's Department of Health Demographic Registry as detailed in "A Flexible Statistical Framework for Estimating Excess Mortality". (Acosta and Irizarry 2021). This details aggregate daily population data for demographic groups from January 1, 1985 to December 31, 2022. For the purposes of this project the dataset has been filtered to include data only from 2002 to 2017. Demographic groups include sex ("male" and "female") as well as age group (0-4, 5-9, 10-14, 15-19, 20-24, 25-29, 30-34, 35-39, 40-44, 45-49, 50-54, 55-59, 60-64, 65-69, 70-74, 75-79, 80-84, and 85+).
 
 All visualizations created using ggplot2.
 
-\[Rahaf's wrangling\]
+Exploratory data analysis was carried out on data filtered to include only the years 2002 to 2016 to examine and compare the recorded death rates across different age and sex groups (Supplementary materials #). Age groups in our dataset were then combined based on similarities in observed trends in rates. Five age categorizations were created from merging (0-4, 5-24, 25-54, 55-74, 75-Inf). New observed death counts, population counts, and death rates were calculated based on these new age categorizations.
+
+A multivariable linear regression model was fitted to this data, and predicted death count values were generated using this model along with confidence intervals for these predictions. The covariates sex, age_category, days since 01-02-2002, and week were considered in our model. Plots were generated to compare predicted deaths (and their corresponding confidence intervals) and observed deaths (Supplementary Materials #).
+
+Further exploratory data analysis was conducted to examine any periods of excess mortality in our dataset. Death counts were plotted for each week to reveal any periods of time where excess mortality occured. These periods were removed from our dataset, and our linear regression was fit again without these extreme observations.
+
+Our fitted model was then used to estimate excess deaths in 2017. The predicted values were then examined using tables and plots. Particular focus was given to the impact of Hurricane Maria's landfall on September 20th, 2017, and its effect on excess deaths across different age groups and sexes.
+
+the nytimes was wrangled using pdftools r package, a function was made that took the page number and month name in the pdf as inputs, the algorithm splits the pdf into lines that can be accessed one by one, header was set to the table and a data frame representing each month was the output for this function. further wrangling was done to turn 12 dataframes into one combined dataframe, pivot longer was used to turn the columns for each year into rows, followed by making a date for each row by using the month, day,year columns and removing them from a final dataframe that included the date and number of deaths for each row. deaths were then summed for each week for better visualization.
 
 To assess population sizes by age group and sex, we began by using ggplot2 to plot a line graph of population across date. Each line was colored by age group to differentiate between age group, and the plot was facet wrapped by sex in order to compare between males and females.
 
 Next, we created two age structure diagrams, one for 2002 and one for 2016 (see Supplementary 1A). We did so by creating two new data frames filtered from weekly_counts by their respective year. Data frames were grouped by agegroup and sex and then the average population for the year was calculated using the summarize() and mean() functions. Finally, these two data frames were plotted using middle centered bar graphs plotted for population by age group. The patchwork package was used to plot both plots next to each other in one figure.
 
-### Results
+After plotting NYtimes scatter plot (see supplementary materials 5A) we can see a drop at the end, which is because it takes time to officially register deaths, it takes 45 days to register the deaths, so the last 45 days were removed. 
 
-```{r}
-library(dplyr)
-library(tidyverse)
-library(patchwork)
-library(ggplot2)
-```
+Excessmort data was wrangled in two different ways for two different research questions of interest, it was wrangled to include dates between 2002 and 2017 and the dates were rounded to the day of the week when maria made landfall in Peurto Rico, grouped by agegroup and sex, the deaths was summed for all days of the week for each week providing weekly counts. excessmort data was also summarised to sum the deaths across all age groups and both sexes for each week, to be compared to the NY times dataset, filtered to only include dates included in the NYtimes pdf.
 
-```{r}
-load("data/excessmort_clean.RData")
-```
+## Results
 
 Among both males and females, the youngest population groups have declined dramatically in size since the early 2000s whereas oldest population groups have grown markedly. This can be seen in both the line graph below, which plots population sizes over time stratified by sex and age group, and in Supplementary Figure 1A, which compares population size by sex and age group between 2002 and 2016. The overall population size in Puerto Rico has remained relatively stable from 2002 to 2016.
 
@@ -53,7 +103,169 @@ weekly_counts |> ggplot() +
   labs(title = "Puerto Rico Population by Age Group and Sex, 2002-2017")
 ```
 
-### Discussion
+Plotting the date vs. observed rate of death by age group revealed higher death rates in older populations, particularly in the 75-79, 80-84, and 80-Inf age categories (Supplementary materials #). Overall, death rates tended to decrease in younger age groups. However, the 0-4 age group is an exception, displaying unusually high variability compared to other young age groups (Supplementary materials #). Trends in sex differences revealed that males tend to have higher death rates than females throughout our dataset (Supplementary materials #).
+
+A final model was chosen to accurately represent the relationship of our selected covariates:
+
+$$
+\begin{align}
+\text{rate} &= \beta_0 + \beta_1 \cdot \text{sex} + \beta_2 \cdot \text{age_category} \nonumber \\
+            &\quad + \beta_3 \cdot \text{day} + \beta_4 \cdot \text{week} \nonumber \\
+            &\quad + \beta_5 \cdot (\text{age_category} \times \text{sex}) \nonumber \\
+            &\quad + \beta_6 \cdot (\text{age_category} \times \text{week}) + \epsilon
+\end{align}
+$$
+
+Notably, the interaction terms age_category X sex and age_category X week were found to be significant in our model based on p-values for the beta coefficients and visual inspection of the observed vs. predicted deaths plot (supplementary material #).
+
+The expected death counts generated by this model revealed a noticeable downward trend in expected deaths in the 0-4, 5-24, and 25-54 age groups (supplementary material #). The trend in the 55-74 age group stayed relatively consistent, and there is a noticeable upward trend in the 75-Inf age group. Death counts were also noticeably higher in males across all age groups. The observed vs. predicted deaths plot shows well fitting expected counts across all age groups, and in particular the 55-74 and 75-Inf age groups. It's important to highlight that the model does not account for all the variability seen across the data's age groups, as indicated by this plot.
+
+```{r}
+weekly_counts_combined <- weekly_counts |>
+  filter(year(date) < 2017) |>
+  mutate(age_category = case_when(
+    agegroup %in% c("75-79", "80-84", "85-Inf") ~ "75-inf",
+    agegroup %in% c("55-59", "60-64", "65-69", "70-74") ~ "55-74",
+    agegroup %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50-54") ~ "25-54",
+    agegroup %in% c("5-9", "10-14", "15-19", "20-24") ~ "5-24",
+    agegroup == "0-4" ~ "0-4"
+  )) |>
+  group_by(date, sex, age_category, week, day) |>
+  summarize(
+    outcome = sum(outcome),
+    population = sum(population),
+    rate = sum(outcome) / sum(population),
+    .groups = "drop"
+  )
+
+fit <- lm(rate ~ sex + age_category + day + week + age_category:sex + age_category:week, data = weekly_counts_combined)
+
+summary(fit)
+
+predictions1 <- predict(fit, newdata = weekly_counts_combined, se.fit = TRUE)
+
+weekly_counts_combined <- weekly_counts_combined %>% 
+  mutate(
+    exp = predictions1$fit*population,
+    se = predictions1$se.fit*population,
+    sigma = sd(fit$resid)*population,
+    excess = outcome - exp,
+    lower = exp - 1.96 * se,
+    upper = exp + 1.96 * se,
+  )
+
+weekly_counts_combined %>%
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = outcome, color = sex), alpha = 0.5) +
+  geom_line(aes(y = exp, color = sex), linetype = "dashed") +
+  facet_wrap(~ age_category, scales = "free_y", ncol = 1) +
+  labs(
+    title = "Observed vs Predicted Deaths by Age Category and Sex",
+    x = "Date",
+    y = "Deaths",
+    color = "Sex"
+  ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(override.aes = list(linetype = c("solid", "dashed")))) +
+  annotate("text", x = min(weekly_counts_combined$date), y = Inf, 
+           hjust = 0, vjust = 1, label = "Solid: Observed\nDashed: Predicted", 
+           size = 3)
+```
+
+Three periods of excess mortality were identified based on our exploratory data analysis, November 2004 - January 2005, August 2014 - February 2015, and November 2016 - December 2016. Predictions for deaths counts were generated againm using our dataset from 2002-2016, without these observations using the same model structure.
+
+This newly fitted model was then used to predict excess deaths in 2017. The results of this analysis indicated a very noticeable increase in excess deaths starting on the week of September 20th, 2017 (supplementary material #). Further inspection of this prediction indicated that mainly occurred in the 55-75 and 75-Inf age groups, while the 0-4, 5-24, and 25-54 age groups saw little to no increase in excess mortality (supplementary material #). Furthermore, excess mortality appeared to rise more significantly among males than females across all age groups.
+
+```{r}
+weekly_counts_combined_1 <- weekly_counts_combined |>
+  filter(
+    !(between(date, make_date(2004, 11, 1), make_date(2005, 1, 31)) |
+      between(date, make_date(2014, 8, 1), make_date(2015, 2, 28)) |
+      between(date, make_date(2016, 11, 1), make_date(2016, 12, 31)))
+  )
+
+fit1 <- lm(rate ~ sex + age_category + day + week + age_category:sex + age_category:week, data = weekly_counts_combined_1)
+
+weekly_counts_with_2017 <- weekly_counts |>
+  mutate(age_category = case_when(
+    agegroup %in% c("75-79", "80-84", "85-Inf") ~ "75-inf",
+    agegroup %in% c("55-59", "60-64", "65-69", "70-74") ~ "55-74",
+    agegroup %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50-54") ~ "25-54",
+    agegroup %in% c("5-9", "10-14", "15-19", "20-24") ~ "5-24",
+    agegroup == "0-4" ~ "0-4"
+  )) |>
+  group_by(date, sex, age_category, week, day) |>
+  summarize(
+    outcome = sum(outcome),
+    population = sum(population),
+    rate = sum(outcome) / sum(population),
+    .groups = "drop"
+  )
+
+predictions2 <- predict(fit1, newdata = weekly_counts_with_2017, se.fit = TRUE)
+
+weekly_counts_with_2017 <- weekly_counts_with_2017 %>% 
+  mutate(
+    exp = predictions2$fit*population,
+    se = predictions2$se.fit*population,
+    sigma = sd(fit$resid)*population,
+    excess = outcome - exp,
+    lower = exp - 1.96 * se,
+    upper = exp + 1.96 * se,
+  )
+
+weekly_counts_with_2017 |>
+  filter(between(date, make_date(2017, 7, 31), make_date(2017, 12, 31))) |>
+  group_by(date) |>
+  summarize(outcome = round(sum(outcome)), 
+            expected = round(sum(exp)), 
+            excess = round(sum(excess))) |>
+  kable()
+```
+
+```{r}
+weekly_counts_with_2017 |>
+  filter(year(date) == 2017) |>
+  ggplot(aes(date, excess)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty = 2, color = "grey") +
+  geom_errorbar(aes(ymin = excess - 1.96*se, ymax = excess + 1.96*se)) +
+  facet_grid(sex ~ age_category, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Date", y = "Excess", title = "Excess by Sex and Age Category")
+```
+
+The nytimes data seemed mostly similar to the excessmort data, differences were seen on certain dates, the largest difference was on the week of 2016-08-03 with excess deaths counted in the excessmort package, this trend continued for the following three weeks that year with a sum of 162. Another inconsistency was observed for 7 weeks starting in 2017-August-30, the sum of total deaths in the 7 weeks is 119 death included in excessmort package but not in the NY times pdf. The line plot shows the increase around SEP-2017 in favor of excessmort package, marked by the vertical grey line.
+```{r}
+ggplot(combined_data, aes(x = date, y = deaths, color = dataset)) +
+  geom_line() + 
+  geom_point() +  # Optional: Add points for clarity
+  geom_vline(xintercept = as.Date("2017-09-20"), linetype = "dashed", color = "grey", linewidth = 0.8)+
+  labs(title = "Deaths Comparison Over Time",
+       x = "Date",
+       y = "Deaths") +
+  theme_bw()
+```
+
+```{r}
+diff <- combined_data %>%
+  group_by(dataset) %>%
+  pivot_wider(names_from = dataset, values_from = deaths) %>%
+  mutate(difference = `excessmort package` - `NY times`) %>% 
+  filter (difference > 8) %>%  select(-c(week,day)) %>% 
+  rename (Date = date, `Excessmort package` =`excessmort package`, Difference=difference) %>% 
+  kable () %>% 
+  kable_styling() %>%
+  row_spec(0, align = "c")  
+
+  
+diff
+```
+
+## Discussion
 
 This linear regression model of mortality in Puerto Rico following Hurricane Maria indicates that there were more than 2,000 more deaths than what would have been expected based on mortality data from 2002 to 2016. Considering the reports of death counts below 100 more than six months after the storm’s initial landing in Puerto Rico, findings on excess deaths raise considerable alarms about the Puerto Rican and American governmental responses to Hurricane Maria and other natural disasters more widely. Research conducted following Hurricane Maria identified a number of failures by the government to appropriately communicate about and respond to the disaster, including limited community engagement, poor hurricane preparedness, and inappropriate emergency response staffing ([Milken Institute, 2018](https://publichealth.gwu.edu/sites/g/files/zaxdzs4586/files/2023-06/acertainment-of-the-estimated-excess-mortality-from-hurricane-maria-in-puerto-rico.pdf)).
 
@@ -65,7 +277,7 @@ Our dataset and project have several limitations. In terms of the data, no infor
 
 For all of the concerns it raises on the response of the Puerto Rico government, this work also sheds light on the essential work conducted by scientists and statisticians who were willing to engage with citizens witnessing significantly more deaths than what their government had reported. Although it came far too late to have significant impacts on disaster relief funding, the choice by the Puerto Rican government to acknowledge the deaths of 2,975 people came directly as a result of the hard work of residents, statisticians, data analysis and policymakers who were willing to think critically about the information that the government was reporting ([The Weather Channel, 2018](https://weather.com/news/news/2018-08-28-puerto-rico-hurricane-maria-death-toll-study#noloc_/weather/today/l/)). The flaws of mortality estimates during Hurricane Maria point to the necessity and power of thoughtful, unbiased data analysis and statistical science in disaster responses and beyond, particularly during events of high impact and high political importance.
 
-References
+## References
 
 Freitas, A. R. R., Donalisio, M. R., & Alarcón-Elbal, P. M. (2018, December). *Excess mortality and causes associated with chikungunya, Puerto Rico, 2014-2015*. Emerging infectious diseases. https://pmc.ncbi.nlm.nih.gov/articles/PMC6256393/#:\~:text=In%20Puerto%20Rico%2C%20the%20chikungunya,0.9%20deaths%2F100%2C000%20population).
 
