@@ -1,15 +1,19 @@
 ---
 title: "supp_materials"
-format: pdf
-execute: 
-  echo: false
+format:
+  html:
+    fig-width: 8
+    fig-height: 6
+execute:
+  echo: False
+  warning: false
 ---
 
 ```{r}
 library(tidyverse)
 library(knitr)
 library(patchwork)
-load("../data/excess_mort.RData")
+load("../data/excessmort_clean.RData")
 nytimes <- load("../data/nytimes_table.RData")
 ```
 
@@ -238,7 +242,8 @@ weekly_counts_with_2017 |>
     geom_hline(yintercept = 0, lty = 2, color = "grey") +
     geom_errorbar(aes(ymin = excess - 1.96*se, ymax = excess + 1.96*se))
 ```
----
+
+------------------------------------------------------------------------
 
 ```{r}
 library(knitr)
@@ -254,7 +259,9 @@ nytimes <- load ("../data/nytimes_table.RData")
 all_data |> ggplot(aes(date, deaths)) + geom_point() + 
   labs(title = "Deaths extracted from PDF shared with NYT", x = "Date", y = "Deaths")
 ```
-### 5B 
+
+### 5B
+
 ```{r}
 library(excessmort)
 daily_counts <- puerto_rico_counts %>% filter(between(year(date), 2015, 2018))
@@ -273,7 +280,9 @@ tmp %>%
     y = "Deaths"
   )
 ```
+
 ### 5C
+
 ```{r}
 tmp2 <- all_data %>% mutate(date = floor_date(date, unit = "week", week_start = 3)) |> 
   filter(date <= max(date) - days(45)) %>% 
@@ -298,6 +307,7 @@ combined_data <- bind_rows(tmp2,weekly_edited )
 ```
 
 ### 5D
+
 ```{r}
 ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
   geom_bar(stat = "identity", position = "dodge") +  # 'dodge' for side-by-side bars
@@ -306,7 +316,9 @@ ggplot(combined_data, aes(x = week, y = deaths, fill = dataset)) +
        y = "Deaths") +
   theme_bw()
 ```
+
 ### 5E
+
 ```{r}
 combined_data1 <- merge(tmp2, weekly_edited, by = "date", suffixes = c("_1", "_2"))
 ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
@@ -316,7 +328,9 @@ ggplot(combined_data1, aes(x = deaths_1, y = deaths_2)) +
        y = "Deaths (Dataset 2)") +
   theme_bw()
 ```
+
 ### 5F
+
 ```{r}
 ggplot(combined_data, aes(x = deaths, fill = dataset)) +
   geom_density(alpha = 0.5) +  # alpha for transparency
@@ -325,7 +339,9 @@ ggplot(combined_data, aes(x = deaths, fill = dataset)) +
        y = "Density") +
   theme_bw()
 ```
+
 ### 5G
+
 ```{r}
 ggplot(combined_data, aes(x = as.factor(week), y = deaths, fill = dataset)) +
   geom_boxplot() +  
