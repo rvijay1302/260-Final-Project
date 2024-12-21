@@ -1,6 +1,8 @@
 ---
 title: "supp_materials"
-format: html
+format: pdf
+execute:
+  echo: False
 ---
 
 ```{r}
