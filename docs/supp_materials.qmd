@@ -3,10 +3,197 @@ title: "supp_materials"
 format: pdf
 execute: 
   echo: false
+---
 
+### 2A
+
+```{r}
+weekly_counts |>
+  filter(year(date) < 2017) |>
+  group_by(date, agegroup) |>
+  summarize(rate = mean(rate, na.rm = TRUE),
+            .groups = "drop") |>
+  ggplot(aes(x = date, y = rate)) +
+  geom_line() +
+  facet_wrap(~ agegroup)
+```
+
+### 2B
+
+```{r}
+weekly_counts |>
+  filter((year(date) < 2017) & (agegroup %in% c("0-4", "5-9", "10-14"))) |>
+  group_by(date, agegroup) |>
+  summarize(rate = mean(rate, na.rm = TRUE),
+            .groups = "drop") |>
+  ggplot(aes(x = date, y = rate)) +
+  geom_line() +
+  facet_wrap(~ agegroup)
+```
+
+### 2C
+
+```{r}
+weekly_counts |>
+  filter(year(date) < 2017) |>
+  group_by(date, sex) |>
+  summarize(rate = mean(rate, na.rm = TRUE),
+            .groups = "drop") |>
+  ggplot(aes(x = date, y = rate)) +
+  geom_line() +
+  facet_wrap(~ sex)
+```
+
+### 2D
+
+```{r}
+weekly_counts_combined <- weekly_counts |>
+  filter(year(date) < 2017) |>
+  mutate(age_category = case_when(
+    agegroup %in% c("75-79", "80-84", "85-Inf") ~ "75-inf",
+    agegroup %in% c("55-59", "60-64", "65-69", "70-74") ~ "55-74",
+    agegroup %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50-54") ~ "25-54",
+    agegroup %in% c("5-9", "10-14", "15-19", "20-24") ~ "5-24",
+    agegroup == "0-4" ~ "0-4"
+  )) |>
+  group_by(date, sex, age_category, week, day) |>
+  summarize(
+    outcome = sum(outcome),
+    population = sum(population),
+    rate = sum(outcome) / sum(population),
+    .groups = "drop"
+  )
+
+fit <- lm(rate ~ sex + age_category + day + week + age_category:sex + age_category:week, data = weekly_counts_combined)
+
+predictions1 <- predict(fit, newdata = weekly_counts_combined, se.fit = TRUE)
+
+weekly_counts_combined <- weekly_counts_combined %>% 
+  mutate(
+    exp = predictions1$fit*population,
+    se = predictions1$se.fit*population,
+    sigma = sd(fit$resid)*population,
+    excess = outcome - exp,
+    lower = exp - 1.96 * se,
+    upper = exp + 1.96 * se,
+  )
+
+ggplot(weekly_counts_combined, aes(x = date)) +
+  geom_line(aes(y = exp, color = age_category), size = 1) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = age_category), alpha = 0.2) +
+  facet_grid(age_category ~ sex, scales = "free_y") +
+  labs(
+    title = "Expected Deaths with 95% Confidence Intervals",
+    x = "Date",
+    y = "Expected Deaths"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom"
+  )
+```
+
+### 3A
+
+```{r}
+weekly_counts |>
+  group_by(date) |>
+  summarize(combine_outcome = sum(outcome), .groups = "drop") |>
+  ggplot(aes(date, combine_outcome)) +
+  geom_line()
+
+weekly_counts_combined |>
+  filter(between(date, make_date(2004, 9, 1), make_date(2005, 6, 1))) |>
+  group_by(date) |>
+  summarize(combine_outcome = sum(outcome), .groups = "drop") |>
+  ggplot(aes(date, combine_outcome)) +
+  geom_line() +
+  ggtitle("Combined Outcomes from September 1, 2004 to June 1, 2005")
+
+weekly_counts |>
+  filter(between(date, make_date(2013, 1, 1), make_date(2015, 12, 1))) |>
+  group_by(date) |>
+  summarize(combine_outcome = sum(outcome), .groups = "drop") |>
+  ggplot(aes(date, combine_outcome)) +
+  geom_line() +
+  ggtitle("Combined Outcomes from January 1, 2013 to December 1, 2015")
+
+weekly_counts |>
+  filter(between(date, make_date(2016, 9, 1), make_date(2017, 2, 1))) |>
+  group_by(date) |>
+  summarize(combine_outcome = sum(outcome), .groups = "drop") |>
+  ggplot(aes(date, combine_outcome)) +
+  geom_line() +
+  ggtitle("Combined Outcomes from September 1, 2016 to February 1, 2017")
+```
+
+### 4A
+
+```{r}
+weekly_counts_combined_1 <- weekly_counts_combined |>
+  filter(
+    !(between(date, make_date(2004, 11, 1), make_date(2005, 1, 31)) |
+      between(date, make_date(2014, 8, 1), make_date(2015, 2, 28)) |
+      between(date, make_date(2016, 11, 1), make_date(2016, 12, 31)))
+  )
+
+fit1 <- lm(rate ~ sex + age_category + day + week + age_category:sex + age_category:week, data = weekly_counts_combined_1)
+
+predictions1 <- predict(fit1, newdata = weekly_counts_combined_1, se.fit = TRUE)
+
+weekly_counts_combined_1 <- weekly_counts_combined_1 %>% 
+  mutate(
+    exp = predictions1$fit*population,
+    se = predictions1$se.fit*population,
+    sigma = sd(fit$resid)*population,
+    excess = outcome - exp,
+    lower = exp - 1.96 * se,
+    upper = exp + 1.96 * se,
+  )
+
+weekly_counts_with_2017 <- weekly_counts |>
+  mutate(age_category = case_when(
+    agegroup %in% c("75-79", "80-84", "85-Inf") ~ "75-inf",
+    agegroup %in% c("55-59", "60-64", "65-69", "70-74") ~ "55-74",
+    agegroup %in% c("25-29", "30-34", "35-39", "40-44", "45-49", "50-54") ~ "25-54",
+    agegroup %in% c("5-9", "10-14", "15-19", "20-24") ~ "5-24",
+    agegroup == "0-4" ~ "0-4"
+  )) |>
+  group_by(date, sex, age_category, week, day) |>
+  summarize(
+    outcome = sum(outcome),
+    population = sum(population),
+    rate = sum(outcome) / sum(population),
+    .groups = "drop"
+  )
+
+predictions2 <- predict(fit1, newdata = weekly_counts_with_2017, se.fit = TRUE)
+
+weekly_counts_with_2017 <- weekly_counts_with_2017 %>% 
+  mutate(
+    exp = predictions2$fit*population,
+    se = predictions2$se.fit*population,
+    sigma = sd(fit$resid)*population,
+    excess = outcome - exp,
+    lower = exp - 1.96 * se,
+    upper = exp + 1.96 * se,
+  )
+
+weekly_counts_with_2017 |>
+  group_by(date) |>
+  filter(year(date) == 2017) |>
+  summarize(excess = sum(excess),
+            se = sqrt(sum(sigma^2 + se^2)), .groups = "drop") |>
+    ggplot(aes(date, excess)) +
+    geom_point() +
+    geom_hline(yintercept = 0, lty = 2, color = "grey") +
+    geom_errorbar(aes(ymin = excess - 1.96*se, ymax = excess + 1.96*se))
+```
 ---
 
 ```{r}
+library(knitr)
+load("../data/excessmort_clean.RData")
 library(tidyverse)
 data <- load("../data/excessmort_clean.RData")
 nytimes <- load ("../data/nytimes_table.RData")
@@ -99,4 +286,5 @@ ggplot(combined_data, aes(x = as.factor(week), y = deaths, fill = dataset)) +
   theme_bw()  
 
 ```
+
 
